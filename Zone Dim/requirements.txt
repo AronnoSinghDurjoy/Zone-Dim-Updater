@@ -1,0 +1,5 @@
+flask
+pandas
+openpyxl
+cx_Oracle
+paramiko

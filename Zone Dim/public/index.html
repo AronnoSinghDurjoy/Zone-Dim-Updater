@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Zone Dim Updater</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js "></script>
+ <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(45deg, #00d4ff, #0099cc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.8;
+        }
+
+        .workflow {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .step {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border-radius: 15px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .step::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #00d4ff, #0099cc);
+        }
+
+        .step:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 212, 255, 0.2);
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .step-number {
+            background: linear-gradient(45deg, #00d4ff, #0099cc);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 1rem;
+        }
+
+        .step-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .file-drop-zone {
+            border: 2px dashed rgba(0, 212, 255, 0.5);
+            border-radius: 12px;
+            padding: 3rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(0, 212, 255, 0.1);
+            margin-bottom: 1rem;
+        }
+
+        .file-drop-zone:hover {
+            border-color: #00d4ff;
+            background: rgba(0, 212, 255, 0.2);
+        }
+
+        .file-drop-zone.dragover {
+            border-color: #00ff88;
+            background: rgba(0, 255, 136, 0.2);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #00d4ff, #0099cc);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0.5rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #ff4757, #ff3742);
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #00ff88, #00cc6a);
+        }
+
+        .status {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .status.success {
+            background: rgba(0, 255, 136, 0.2);
+            border: 1px solid rgba(0, 255, 136, 0.5);
+        }
+
+        .status.error {
+            background: rgba(255, 71, 87, 0.2);
+            border: 1px solid rgba(255, 71, 87, 0.5);
+        }
+
+        .status.info {
+            background: rgba(0, 212, 255, 0.2);
+            border: 1px solid rgba(0, 212, 255, 0.5);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00d4ff, #0099cc);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .server-config {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .config-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .config-label {
+            opacity: 0.8;
+            font-weight: 500;
+        }
+
+        .config-value {
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 212, 255, 0.2);
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .logs {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-top: 1rem;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+
+        .log-entry {
+            margin-bottom: 0.5rem;
+            padding: 0.3rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .log-timestamp {
+            color: #00d4ff;
+            font-weight: bold;
+        }
+
+        .log-message {
+            margin-left: 1rem;
+        }
+
+        .database-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .db-action {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .db-action h4 {
+            margin-bottom: 0.5rem;
+            color: #00d4ff;
+        }
+
+        .icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .processing {
+            animation: pulse 2s infinite;
+        }
+
+        .summary {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border-radius: 15px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin-top: 2rem;
+        }
+
+        .summary h3 {
+            color: #00d4ff;
+            margin-bottom: 1rem;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .summary-item {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        .summary-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+
+        .summary-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+            <h1>Zone Dim Updater</h1>
+            <p>Update Zone dim IN 202,203 and 204 Server </p>
+        </div>
+    <!-- Step 1: File Upload -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">1</div>
+        <div class="step-title">Excel File Upload</div>
+      </div>
+      <div class="file-drop-zone" id="fileDropZone">
+        <div class="icon">📁</div>
+        <p>Drop Excel file here or click to browse</p>
+        <p style="font-size: 0.9rem; opacity: 0.7; margin-top: 0.5rem;">
+          Sheets: common_cell_data, site_data
+        </p>
+      </div>
+      <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls" />
+      <button class="btn" onclick="document.getElementById('fileInput').click()">
+        Choose File
+      </button>
+      <div class="status" id="fileStatus"></div>
+    </div>
+
+    <!-- Step 2: CSV Export -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">2</div>
+        <div class="step-title">CSV Export</div>
+      </div>
+      <p>Export sheets as UTF-8 CSV files</p>
+      <div class="progress-bar">
+        <div class="progress-fill" id="csvProgress"></div>
+      </div>
+      <button class="btn" id="exportBtn" disabled onclick="exportCSV()">
+        Export to CSV
+      </button>
+      <div class="status" id="csvStatus"></div>
+    </div>
+
+    <!-- Step 3: SFTP Upload -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">3</div>
+        <div class="step-title">SFTP Upload</div>
+      </div>
+      <div class="server-config">
+        <div class="config-row">
+          <span class="config-label">Server:</span>
+          <span class="config-value">sftp://192.168.61.202</span>
+        </div>
+        <div class="config-row">
+          <span class="config-label">User:</span>
+          <span class="config-value">dwhadmin</span>
+        </div>
+        <div class="config-row">
+          <span class="config-label">Path:</span>
+          <span class="config-value">/data02/bts_info</span>
+        </div>
+      </div>
+      <button class="btn" id="sftpBtn" disabled onclick="uploadToSFTP()">
+        Upload to SFTP
+      </button>
+      <div class="status" id="sftpStatus"></div>
+    </div>
+
+    <!-- Step 4: Database Operations -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">4</div>
+        <div class="step-title">Database Operations</div>
+      </div>
+      <div class="server-config">
+        <div class="config-row">
+          <span class="config-label">Oracle Host:</span>
+          <span class="config-value">192.168.61.202:1521</span>
+        </div>
+        <div class="config-row">
+          <span class="config-label">Database:</span>
+          <span class="config-value">DWHDB01</span>
+        </div>
+      </div>
+     <!-- Step 4: Database Operations -->
+<div class="database-actions">
+  <div class="db-action">
+    <h4>Main DB (202)</h4>
+    <button class="btn btn-secondary" data-db="202" disabled>
+      Execute Operations
+    </button>
+  </div>
+  <div class="db-action">
+    <h4>DB 203</h4>
+    <button class="btn btn-secondary" data-db="203" disabled>
+      Update Zone_Dim
+    </button>
+  </div>
+  <div class="db-action">
+    <h4>DB 204</h4>
+    <button class="btn btn-secondary" data-db="204" disabled>
+      Update Zone_Dim
+    </button>
+  </div>
+</div>
+
+      <div class="status" id="dbStatus"></div>
+    </div>
+
+    <!-- Summary -->
+    <div class="summary">
+      <h3>Process Summary</h3>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <div class="summary-value" id="filesProcessed">0</div>
+          <div class="summary-label">Files Processed</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-value" id="recordsInserted">0</div>
+          <div class="summary-label">Records Inserted</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-value" id="duplicatesFound">0</div>
+          <div class="summary-label">Duplicates Found</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-value" id="processTime">0s</div>
+          <div class="summary-label">Process Time</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Logs -->
+    <div class="logs" id="logs">
+      <div class="log-entry">
+        <span class="log-timestamp">[SYSTEM]</span>
+        <span class="log-message">Data Management Portal initialized</span>
+      </div>
+    </div>
+  </div>
+
+ <script>
+  let uploadedFile = null;
+  let processStartTime = null;
+
+  const fileDropZone = document.getElementById("fileDropZone");
+  const fileInput = document.getElementById("fileInput");
+
+  // Drag & Drop and Input Events
+  fileDropZone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    fileDropZone.classList.add("dragover");
+  });
+  fileDropZone.addEventListener("dragleave", () => {
+    fileDropZone.classList.remove("dragover");
+  });
+  fileDropZone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    fileDropZone.classList.remove("dragover");
+    if (e.dataTransfer.files.length > 0) {
+      handleFile(e.dataTransfer.files[0]);
+    }
+  });
+  fileDropZone.addEventListener("click", () => fileInput.click());
+  fileInput.addEventListener("change", (e) => {
+    if (e.target.files.length > 0) {
+      handleFile(e.target.files[0]);
+    }
+  });
+
+  function handleFile(file) {
+    if (!file.name.match(/\.(xlsx|xls)$/i)) {
+      showStatus("fileStatus", "error", "Please select an Excel file (.xlsx or .xls)");
+      return;
+    }
+    uploadedFile = file;
+    showStatus("fileStatus", "success", `File loaded: ${file.name}`);
+    document.getElementById("exportBtn").disabled = false;
+    logMessage(`File uploaded: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+  }
+
+  async function exportCSV() {
+    if (!uploadedFile) {
+      showStatus("csvStatus", "error", "No file selected");
+      return;
+    }
+
+    processStartTime = Date.now();
+    showStatus("csvStatus", "info", "Processing Excel file...");
+
+    const formData = new FormData();
+    formData.append("excel", uploadedFile);
+
+    try {
+      const response = await fetch("/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.files) {
+        throw new Error(result.error || "Upload failed");
+      }
+
+      showStatus(
+        "csvStatus",
+        "success",
+        `CSV files generated successfully: ${result.files.join(", ")}`
+      );
+      document.getElementById("sftpBtn").disabled = false;
+      logMessage(`CSV export completed: ${result.files.join(", ")}`);
+    } catch (err) {
+      showStatus("csvStatus", "error", `Error exporting CSV: ${err.message}`);
+      logMessage(`Error: ${err.message}`);
+    }
+  }
+
+  async function uploadToSFTP() {
+    showStatus("sftpStatus", "info", "Uploading files via SFTP...");
+    logMessage("SFTP: Connecting to server...");
+
+    try {
+      const response = await fetch("/sftp-upload", {
+        method: "POST",
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "SFTP upload failed");
+      }
+
+      // connection success
+      logMessage("SFTP: Connected to server");
+
+      // directory cleared
+      const removed = result.removed_count ?? 0;
+      logMessage(`SFTP: Cleared remote directory (${removed} file${removed !== 1 ? "s" : ""} removed)`);
+
+      // uploaded files
+      (result.uploaded_files || []).forEach((f) =>
+        logMessage(`SFTP: Uploaded file: ${f}`)
+      );
+
+      showStatus("sftpStatus", "success", "Files uploaded to SFTP server");
+      document.querySelectorAll(".db-action button").forEach((btn) => {
+        btn.disabled = false;
+      });
+    } catch (err) {
+      showStatus("sftpStatus", "error", `SFTP upload failed: ${err.message}`);
+      logMessage(`SFTP Error: ${err.message}`);
+    }
+  }
+
+  async function executeDatabaseOps(dbType) {
+    showStatus("dbStatus", "info", `Executing database operations for DB ${dbType}...`);
+    logMessage(`DB ${dbType}: Starting operation`);
+
+    try {
+      const endpoint = `/run-db${dbType}`;
+      const response = await fetch(endpoint, {
+        method: "POST",
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || `DB ${dbType} operation failed`);
+      }
+
+      showStatus("dbStatus", "success", `Database operations completed for DB ${dbType}`);
+      logMessage(`DB ${dbType}: Operation completed successfully`);
+
+      // Update summary with real data from backend, fallback to defaults if missing
+      updateSummary(
+        result.month_key || "",
+        result.duplicates || 0,
+        result.records_inserted || 0,
+        result.files_processed || 2
+      );
+    } catch (err) {
+      showStatus("dbStatus", "error", `DB ${dbType} operation failed: ${err.message}`);
+      logMessage(`DB ${dbType} Error: ${err.message}`);
+    }
+  }
+
+  function updateSummary(monthKey = "", duplicates = 0, recordsInserted = 0, filesProcessed = 0) {
+    document.getElementById("filesProcessed").textContent = filesProcessed;
+    document.getElementById("recordsInserted").textContent = recordsInserted;
+    document.getElementById("duplicatesFound").textContent = duplicates;
+    if (processStartTime) {
+      const elapsed = Math.floor((Date.now() - processStartTime) / 1000);
+      document.getElementById("processTime").textContent = `${elapsed}s`;
+    }
+  }
+
+  function showStatus(elementId, type, message) {
+    const el = document.getElementById(elementId);
+    el.className = `status ${type}`;
+    el.textContent = message;
+    el.style.display = "block";
+    if (type === "success") {
+      setTimeout(() => (el.style.display = "none"), 5000);
+    }
+  }
+
+  function logMessage(message) {
+    const logs = document.getElementById("logs");
+    const entry = document.createElement("div");
+    entry.className = "log-entry";
+    const time = new Date().toLocaleTimeString();
+    entry.innerHTML = `<span class="log-timestamp">[${time}]</span><span class="log-message">${message}</span>`;
+    logs.appendChild(entry);
+    logs.scrollTop = logs.scrollHeight;
+  }
+
+  // Attach button event handlers
+  document.getElementById("exportBtn").onclick = exportCSV;
+  document.getElementById("sftpBtn").onclick = uploadToSFTP;
+  document.querySelectorAll(".db-action button").forEach((btn) => {
+    btn.onclick = () => executeDatabaseOps(btn.getAttribute("data-db"));
+  });
+</script>
+
+</body>
+</html>
