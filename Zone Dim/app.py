@@ -27,9 +27,7 @@ db_configs = {
 
 # Allowed numbers
 ALLOWED_NUMBERS = {
-    '8801560023676',
-    '8801550155096',
-    '8801912345678',
+   
 }
 
 # SMS Gateway Info (only accessible from 202 server)
