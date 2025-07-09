@@ -4,660 +4,818 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Zone Dim Updater</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js "></script>
- <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: #ffffff;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #ffffff;
+      min-height: 100vh;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+    }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
+    .container {
+      max-width: 1200px;
+      width: 100%;
+    }
 
-        .header {
-            text-align: center;
-            margin-bottom: 3rem;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 2rem;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
+    .header {
+      text-align: center;
+      margin-bottom: 3rem;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 2rem;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
 
-        .header h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            background: linear-gradient(45deg, #00d4ff, #0099cc);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
+    .header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(45deg, #00d4ff, #0099cc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
 
-        .header p {
-            font-size: 1.1rem;
-            opacity: 0.8;
-        }
+    .header p {
+      font-size: 1.1rem;
+      opacity: 0.8;
+    }
 
-        .workflow {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 2rem;
-            margin-bottom: 3rem;
-        }
+    /* ======= LOGIN STYLES ======== */
 
-        .step {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(15px);
-            border-radius: 15px;
-            padding: 2rem;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
+    .login-section {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(15px);
+      border-radius: 15px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
 
-        .step::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, #00d4ff, #0099cc);
-        }
+    .login-section h2 {
+      color: #00d4ff;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
 
-        .step:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0, 212, 255, 0.2);
-        }
+    .login-field {
+      margin-bottom: 1.5rem;
+    }
 
-        .step-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
+    .login-field label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: #00d4ff;
+    }
 
-        .step-number {
-            background: linear-gradient(45deg, #00d4ff, #0099cc);
-            color: white;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            margin-right: 1rem;
-        }
+    .login-field input[type="text"],
+    .login-field input[type="tel"] {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      font-size: 1rem;
+      outline: none;
+    }
 
-        .step-title {
-            font-size: 1.3rem;
-            font-weight: 600;
-        }
+    .login-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
 
-        .file-drop-zone {
-            border: 2px dashed rgba(0, 212, 255, 0.5);
-            border-radius: 12px;
-            padding: 3rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background: rgba(0, 212, 255, 0.1);
-            margin-bottom: 1rem;
-        }
+    .btn {
+      background: linear-gradient(45deg, #00d4ff, #0099cc);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
 
-        .file-drop-zone:hover {
-            border-color: #00d4ff;
-            background: rgba(0, 212, 255, 0.2);
-        }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(0, 212, 255, 0.3);
+    }
 
-        .file-drop-zone.dragover {
-            border-color: #00ff88;
-            background: rgba(0, 255, 136, 0.2);
-        }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
 
-        .file-input {
-            display: none;
-        }
+    .status {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-radius: 8px;
+      display: none;
+      text-align: center;
+    }
 
-        .btn {
-            background: linear-gradient(45deg, #00d4ff, #0099cc);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin: 0.5rem;
-        }
+    .status.success {
+      background: rgba(0, 255, 136, 0.2);
+      border: 1px solid rgba(0, 255, 136, 0.5);
+      color: #00cc44;
+    }
 
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(0, 212, 255, 0.3);
-        }
+    .status.error {
+      background: rgba(255, 71, 87, 0.2);
+      border: 1px solid rgba(255, 71, 87, 0.5);
+      color: #ff4757;
+    }
 
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+    .status.info {
+      background: rgba(0, 212, 255, 0.2);
+      border: 1px solid rgba(0, 212, 255, 0.5);
+      color: #0099cc;
+    }
 
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
+    /* ======= EXISTING WORKFLOW STYLES ======= */
 
-        .btn-danger {
-            background: linear-gradient(45deg, #ff4757, #ff3742);
-        }
+    .workflow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 2rem;
+      margin-bottom: 3rem;
+    }
 
-        .btn-success {
-            background: linear-gradient(45deg, #00ff88, #00cc6a);
-        }
+    .step {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(15px);
+      border-radius: 15px;
+      padding: 2rem;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
 
-        .status {
-            margin-top: 1rem;
-            padding: 1rem;
-            border-radius: 8px;
-            display: none;
-        }
+    .step::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #00d4ff, #0099cc);
+    }
 
-        .status.success {
-            background: rgba(0, 255, 136, 0.2);
-            border: 1px solid rgba(0, 255, 136, 0.5);
-        }
+    .step:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(0, 212, 255, 0.2);
+    }
 
-        .status.error {
-            background: rgba(255, 71, 87, 0.2);
-            border: 1px solid rgba(255, 71, 87, 0.5);
-        }
+    .step-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
 
-        .status.info {
-            background: rgba(0, 212, 255, 0.2);
-            border: 1px solid rgba(0, 212, 255, 0.5);
-        }
+    .step-number {
+      background: linear-gradient(45deg, #00d4ff, #0099cc);
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      margin-right: 1rem;
+    }
 
-        .progress-bar {
-            width: 100%;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
-            overflow: hidden;
-            margin: 1rem 0;
-        }
+    .step-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+    }
 
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #00d4ff, #0099cc);
-            width: 0%;
-            transition: width 0.3s ease;
-        }
+    .file-drop-zone {
+      border: 2px dashed rgba(0, 212, 255, 0.5);
+      border-radius: 12px;
+      padding: 3rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: rgba(0, 212, 255, 0.1);
+      margin-bottom: 1rem;
+    }
 
-        .server-config {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-        }
+    .file-drop-zone:hover {
+      border-color: #00d4ff;
+      background: rgba(0, 212, 255, 0.2);
+    }
 
-        .config-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.5rem;
-            font-size: 0.9rem;
-        }
+    .file-drop-zone.dragover {
+      border-color: #00ff88;
+      background: rgba(0, 255, 136, 0.2);
+    }
 
-        .config-label {
-            opacity: 0.8;
-            font-weight: 500;
-        }
+    .file-input {
+      display: none;
+    }
 
-        .config-value {
-            font-family: 'Courier New', monospace;
-            background: rgba(0, 212, 255, 0.2);
-            padding: 0.3rem 0.6rem;
-            border-radius: 4px;
-            font-size: 0.8rem;
-        }
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
 
-        .logs {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 10px;
-            padding: 1rem;
-            margin-top: 1rem;
-            max-height: 300px;
-            overflow-y: auto;
-            font-family: 'Courier New', monospace;
-            font-size: 0.85rem;
-        }
+    .btn-danger {
+      background: linear-gradient(45deg, #ff4757, #ff3742);
+    }
 
-        .log-entry {
-            margin-bottom: 0.5rem;
-            padding: 0.3rem 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
+    .btn-success {
+      background: linear-gradient(45deg, #00ff88, #00cc6a);
+    }
 
-        .log-timestamp {
-            color: #00d4ff;
-            font-weight: bold;
-        }
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      overflow: hidden;
+      margin: 1rem 0;
+    }
 
-        .log-message {
-            margin-left: 1rem;
-        }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #00d4ff, #0099cc);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
 
-        .database-actions {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-top: 1rem;
-        }
+    .server-config {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
 
-        .db-action {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            padding: 1rem;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
+    .config-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+    }
 
-        .db-action h4 {
-            margin-bottom: 0.5rem;
-            color: #00d4ff;
-        }
+    .config-label {
+      opacity: 0.8;
+      font-weight: 500;
+    }
 
-        .icon {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-        }
+    .config-value {
+      font-family: 'Courier New', monospace;
+      background: rgba(0, 212, 255, 0.2);
+      padding: 0.3rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+    }
 
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
+    .logs {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 10px;
+      padding: 1rem;
+      margin-top: 1rem;
+      max-height: 300px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+    }
 
-        .processing {
-            animation: pulse 2s infinite;
-        }
+    .log-entry {
+      margin-bottom: 0.5rem;
+      padding: 0.3rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
 
-        .summary {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(15px);
-            border-radius: 15px;
-            padding: 2rem;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            margin-top: 2rem;
-        }
+    .log-timestamp {
+      color: #00d4ff;
+      font-weight: bold;
+    }
 
-        .summary h3 {
-            color: #00d4ff;
-            margin-bottom: 1rem;
-        }
+    .log-message {
+      margin-left: 1rem;
+    }
 
-        .summary-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-        }
+    .database-actions {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
 
-        .summary-item {
-            text-align: center;
-            padding: 1rem;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 8px;
-        }
+    .db-action {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
 
-        .summary-value {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #00d4ff;
-        }
+    .db-action h4 {
+      margin-bottom: 0.5rem;
+      color: #00d4ff;
+    }
 
-        .summary-label {
-            font-size: 0.9rem;
-            opacity: 0.8;
-        }
-    </style>
+    .icon {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    .processing {
+      animation: pulse 2s infinite;
+    }
+
+    .summary {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(15px);
+      border-radius: 15px;
+      padding: 2rem;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      margin-top: 2rem;
+    }
+
+    .summary h3 {
+      color: #00d4ff;
+      margin-bottom: 1rem;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    .summary-item {
+      text-align: center;
+      padding: 1rem;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+    }
+
+    .summary-value {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #00d4ff;
+    }
+
+    .summary-label {
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+  </style>
 </head>
 <body>
+
   <div class="container">
+
     <div class="header">
-            <h1>Zone Dim Updater</h1>
-            <p>Update Zone dim IN 202,203 and 204 Server </p>
-        </div>
-    <!-- Step 1: File Upload -->
-    <div class="step">
-      <div class="step-header">
-        <div class="step-number">1</div>
-        <div class="step-title">Excel File Upload</div>
-      </div>
-      <div class="file-drop-zone" id="fileDropZone">
-        <div class="icon">📁</div>
-        <p>Drop Excel file here or click to browse</p>
-        <p style="font-size: 0.9rem; opacity: 0.7; margin-top: 0.5rem;">
-          Sheets: common_cell_data, site_data
-        </p>
-      </div>
-      <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls" />
-      <button class="btn" onclick="document.getElementById('fileInput').click()">
-        Choose File
-      </button>
-      <div class="status" id="fileStatus"></div>
+      <h1>Zone Dim Updater</h1>
+      <p>Update Zone dim IN 202,203 and 204 Server</p>
     </div>
 
-    <!-- Step 2: CSV Export -->
-    <div class="step">
-      <div class="step-header">
-        <div class="step-number">2</div>
-        <div class="step-title">CSV Export</div>
+    <!-- LOGIN SECTION -->
+    <div class="login-section" id="loginSection">
+      <h2>User Login</h2>
+      <div class="login-field" id="phoneInputDiv">
+        <label for="phoneInput">Enter Phone Number</label>
+        <input type="tel" id="phoneInput" placeholder="e.g.start with 88" />
       </div>
-      <p>Export sheets as UTF-8 CSV files</p>
-      <div class="progress-bar">
-        <div class="progress-fill" id="csvProgress"></div>
+      <div class="login-field" id="otpInputDiv" style="display:none;">
+        <label for="otpInput">Enter OTP</label>
+        <input type="text" id="otpInput" placeholder="6-digit code" maxlength="6" />
       </div>
-      <button class="btn" id="exportBtn" disabled onclick="exportCSV()">
-        Export to CSV
-      </button>
-      <div class="status" id="csvStatus"></div>
+      <div class="login-buttons">
+        <button id="sendOtpBtn" class="btn">Send OTP</button>
+        <button id="verifyOtpBtn" class="btn" style="display:none;">Verify OTP</button>
+        <button id="logoutBtn" class="btn" style="display:none; background: #ff4757;">Logout</button>
+      </div>
+      <div class="status" id="loginStatus"></div>
     </div>
 
-    <!-- Step 3: SFTP Upload -->
-    <div class="step">
-      <div class="step-header">
-        <div class="step-number">3</div>
-        <div class="step-title">SFTP Upload</div>
-      </div>
-      <div class="server-config">
-        <div class="config-row">
-          <span class="config-label">Server:</span>
-          <span class="config-value">sftp://192.168.61.202</span>
-        </div>
-        <div class="config-row">
-          <span class="config-label">User:</span>
-          <span class="config-value">dwhadmin</span>
-        </div>
-        <div class="config-row">
-          <span class="config-label">Path:</span>
-          <span class="config-value">/data02/bts_info</span>
-        </div>
-      </div>
-      <button class="btn" id="sftpBtn" disabled onclick="uploadToSFTP()">
-        Upload to SFTP
-      </button>
-      <div class="status" id="sftpStatus"></div>
-    </div>
+    <!-- MAIN WORKFLOW - DISABLED UNTIL LOGIN -->
+    <div id="mainWorkflow" style="pointer-events:none; opacity: 0.5;">
 
-    <!-- Step 4: Database Operations -->
-    <div class="step">
-      <div class="step-header">
-        <div class="step-number">4</div>
-        <div class="step-title">Database Operations</div>
+      <!-- Step 1: File Upload -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <div class="step-title">Excel File Upload</div>
+        </div>
+        <div class="file-drop-zone" id="fileDropZone">
+          <div class="icon">📁</div>
+          <p>Drop Excel file here or click to browse</p>
+          <p style="font-size: 0.9rem; opacity: 0.7; margin-top: 0.5rem;">
+            Sheets: common_cell_data, site_data
+          </p>
+        </div>
+        <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls" />
+        <button class="btn" id="chooseFileBtn">
+          Choose File
+        </button>
+        <div class="status" id="fileStatus"></div>
       </div>
-      <div class="server-config">
-        <div class="config-row">
-          <span class="config-label">Oracle Host:</span>
-          <span class="config-value">192.168.61.202:1521</span>
+
+      <!-- Step 2: CSV Export -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <div class="step-title">CSV Export</div>
         </div>
-        <div class="config-row">
-          <span class="config-label">Database:</span>
-          <span class="config-value">DWHDB01</span>
+        <p>Export sheets as UTF-8 CSV files</p>
+        <div class="progress-bar">
+          <div class="progress-fill" id="csvProgress"></div>
+        </div>
+        <button class="btn" id="exportBtn" disabled>
+          Export to CSV
+        </button>
+        <div class="status" id="csvStatus"></div>
+      </div>
+
+      <!-- Step 3: SFTP Upload -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <div class="step-title">SFTP Upload</div>
+        </div>
+        <div class="server-config">
+          <div class="config-row">
+            <span class="config-label">Server:</span>
+            <span class="config-value">sftp://192.168.61.202</span>
+          </div>
+          <div class="config-row">
+            <span class="config-label">User:</span>
+            <span class="config-value">dwhadmin</span>
+          </div>
+          <div class="config-row">
+            <span class="config-label">Path:</span>
+            <span class="config-value">/data02/bts_info</span>
+          </div>
+        </div>
+        <button class="btn" id="sftpBtn" disabled>
+          Upload to SFTP
+        </button>
+        <div class="status" id="sftpStatus"></div>
+      </div>
+
+      <!-- Step 4: Database Operations -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">4</div>
+          <div class="step-title">Database Operations</div>
+        </div>
+        <div class="server-config">
+          <div class="config-row">
+            <span class="config-label">Oracle Host:</span>
+            <span class="config-value">192.168.61.202:1521</span>
+          </div>
+          <div class="config-row">
+            <span class="config-label">Database:</span>
+            <span class="config-value">DWHDB01</span>
+          </div>
+        </div>
+        <div class="database-actions">
+          <div class="db-action">
+            <h4>Main DB (202)</h4>
+            <button class="btn btn-secondary" data-db="202" disabled>
+              Execute Operations
+            </button>
+          </div>
+          <div class="db-action">
+            <h4>DB 203</h4>
+            <button class="btn btn-secondary" data-db="203" disabled>
+              Update Zone_Dim
+            </button>
+          </div>
+          <div class="db-action">
+            <h4>DB 204</h4>
+            <button class="btn btn-secondary" data-db="204" disabled>
+              Update Zone_Dim
+            </button>
+          </div>
+        </div>
+        <div class="status" id="dbStatus"></div>
+      </div>
+
+      <!-- Summary -->
+      <div class="summary">
+        <h3>Process Summary</h3>
+        <div class="summary-grid">
+          <div class="summary-item">
+            <div class="summary-value" id="filesProcessed">0</div>
+            <div class="summary-label">Files Processed</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-value" id="recordsInserted">0</div>
+            <div class="summary-label">Records Inserted</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-value" id="duplicatesFound">0</div>
+            <div class="summary-label">Duplicates Found</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-value" id="processTime">0s</div>
+            <div class="summary-label">Process Time</div>
+          </div>
         </div>
       </div>
-     <!-- Step 4: Database Operations -->
-<div class="database-actions">
-  <div class="db-action">
-    <h4>Main DB (202)</h4>
-    <button class="btn btn-secondary" data-db="202" disabled>
-      Execute Operations
-    </button>
-  </div>
-  <div class="db-action">
-    <h4>DB 203</h4>
-    <button class="btn btn-secondary" data-db="203" disabled>
-      Update Zone_Dim
-    </button>
-  </div>
-  <div class="db-action">
-    <h4>DB 204</h4>
-    <button class="btn btn-secondary" data-db="204" disabled>
-      Update Zone_Dim
-    </button>
-  </div>
-</div>
 
-      <div class="status" id="dbStatus"></div>
-    </div>
-
-    <!-- Summary -->
-    <div class="summary">
-      <h3>Process Summary</h3>
-      <div class="summary-grid">
-        <div class="summary-item">
-          <div class="summary-value" id="filesProcessed">0</div>
-          <div class="summary-label">Files Processed</div>
-        </div>
-        <div class="summary-item">
-          <div class="summary-value" id="recordsInserted">0</div>
-          <div class="summary-label">Records Inserted</div>
-        </div>
-        <div class="summary-item">
-          <div class="summary-value" id="duplicatesFound">0</div>
-          <div class="summary-label">Duplicates Found</div>
-        </div>
-        <div class="summary-item">
-          <div class="summary-value" id="processTime">0s</div>
-          <div class="summary-label">Process Time</div>
+      <!-- Logs -->
+      <div class="logs" id="logs">
+        <div class="log-entry">
+          <span class="log-timestamp">[SYSTEM]</span>
+          <span class="log-message">Data Management Portal initialized</span>
         </div>
       </div>
-    </div>
 
-    <!-- Logs -->
-    <div class="logs" id="logs">
-      <div class="log-entry">
-        <span class="log-timestamp">[SYSTEM]</span>
-        <span class="log-message">Data Management Portal initialized</span>
-      </div>
-    </div>
-  </div>
+    </div> <!-- end mainWorkflow -->
 
- <script>
+  </div> <!-- end container -->
+
+<script>
   let uploadedFile = null;
   let processStartTime = null;
+  let currentUserPhone = null;
 
+  // DOM Elements
+  const loginSection = document.getElementById("loginSection");
+  const mainWorkflow = document.getElementById("mainWorkflow");
+  const phoneInput = document.getElementById("phoneInput");
+  const otpInputDiv = document.getElementById("otpInputDiv");
+  const otpInput = document.getElementById("otpInput");
+  const sendOtpBtn = document.getElementById("sendOtpBtn");
+  const verifyOtpBtn = document.getElementById("verifyOtpBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
+  const loginStatus = document.getElementById("loginStatus");
+
+  // File Upload elements
   const fileDropZone = document.getElementById("fileDropZone");
   const fileInput = document.getElementById("fileInput");
+  const chooseFileBtn = document.getElementById("chooseFileBtn");
+  const exportBtn = document.getElementById("exportBtn");
+  const sftpBtn = document.getElementById("sftpBtn");
 
-  // Drag & Drop and Input Events
-  fileDropZone.addEventListener("dragover", (e) => {
-    e.preventDefault();
-    fileDropZone.classList.add("dragover");
-  });
-  fileDropZone.addEventListener("dragleave", () => {
-    fileDropZone.classList.remove("dragover");
-  });
-  fileDropZone.addEventListener("drop", (e) => {
-    e.preventDefault();
-    fileDropZone.classList.remove("dragover");
-    if (e.dataTransfer.files.length > 0) {
-      handleFile(e.dataTransfer.files[0]);
-    }
-  });
-  fileDropZone.addEventListener("click", () => fileInput.click());
-  fileInput.addEventListener("change", (e) => {
-    if (e.target.files.length > 0) {
-      handleFile(e.target.files[0]);
-    }
-  });
+  // Status displays
+  const fileStatus = document.getElementById("fileStatus");
+  const csvStatus = document.getElementById("csvStatus");
+  const sftpStatus = document.getElementById("sftpStatus");
+  const dbStatus = document.getElementById("dbStatus");
 
-  function handleFile(file) {
-    if (!file.name.match(/\.(xlsx|xls)$/i)) {
-      showStatus("fileStatus", "error", "Please select an Excel file (.xlsx or .xls)");
-      return;
-    }
-    uploadedFile = file;
-    showStatus("fileStatus", "success", `File loaded: ${file.name}`);
-    document.getElementById("exportBtn").disabled = false;
-    logMessage(`File uploaded: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
-  }
+  // Database buttons
+  const dbButtons = document.querySelectorAll(".db-action button");
 
-  async function exportCSV() {
-    if (!uploadedFile) {
-      showStatus("csvStatus", "error", "No file selected");
-      return;
-    }
-
-    processStartTime = Date.now();
-    showStatus("csvStatus", "info", "Processing Excel file...");
-
-    const formData = new FormData();
-    formData.append("excel", uploadedFile);
-
-    try {
-      const response = await fetch("/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      const result = await response.json();
-
-      if (!response.ok || !result.files) {
-        throw new Error(result.error || "Upload failed");
-      }
-
-      showStatus(
-        "csvStatus",
-        "success",
-        `CSV files generated successfully: ${result.files.join(", ")}`
-      );
-      document.getElementById("sftpBtn").disabled = false;
-      logMessage(`CSV export completed: ${result.files.join(", ")}`);
-    } catch (err) {
-      showStatus("csvStatus", "error", `Error exporting CSV: ${err.message}`);
-      logMessage(`Error: ${err.message}`);
-    }
-  }
-
-  async function uploadToSFTP() {
-    showStatus("sftpStatus", "info", "Uploading files via SFTP...");
-    logMessage("SFTP: Connecting to server...");
-
-    try {
-      const response = await fetch("/sftp-upload", {
-        method: "POST",
-      });
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "SFTP upload failed");
-      }
-
-      // connection success
-      logMessage("SFTP: Connected to server");
-
-      // directory cleared
-      const removed = result.removed_count ?? 0;
-      logMessage(`SFTP: Cleared remote directory (${removed} file${removed !== 1 ? "s" : ""} removed)`);
-
-      // uploaded files
-      (result.uploaded_files || []).forEach((f) =>
-        logMessage(`SFTP: Uploaded file: ${f}`)
-      );
-
-      showStatus("sftpStatus", "success", "Files uploaded to SFTP server");
-      document.querySelectorAll(".db-action button").forEach((btn) => {
-        btn.disabled = false;
-      });
-    } catch (err) {
-      showStatus("sftpStatus", "error", `SFTP upload failed: ${err.message}`);
-      logMessage(`SFTP Error: ${err.message}`);
-    }
-  }
-
-  async function executeDatabaseOps(dbType) {
-    showStatus("dbStatus", "info", `Executing database operations for DB ${dbType}...`);
-    logMessage(`DB ${dbType}: Starting operation`);
-
-    try {
-      const endpoint = `/run-db${dbType}`;
-      const response = await fetch(endpoint, {
-        method: "POST",
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || `DB ${dbType} operation failed`);
-      }
-
-      showStatus("dbStatus", "success", `Database operations completed for DB ${dbType}`);
-      logMessage(`DB ${dbType}: Operation completed successfully`);
-
-      // Update summary with real data from backend, fallback to defaults if missing
-      updateSummary(
-        result.month_key || "",
-        result.duplicates || 0,
-        result.records_inserted || 0,
-        result.files_processed || 2
-      );
-    } catch (err) {
-      showStatus("dbStatus", "error", `DB ${dbType} operation failed: ${err.message}`);
-      logMessage(`DB ${dbType} Error: ${err.message}`);
-    }
-  }
-
-  function updateSummary(monthKey = "", duplicates = 0, recordsInserted = 0, filesProcessed = 0) {
-    document.getElementById("filesProcessed").textContent = filesProcessed;
-    document.getElementById("recordsInserted").textContent = recordsInserted;
-    document.getElementById("duplicatesFound").textContent = duplicates;
-    if (processStartTime) {
-      const elapsed = Math.floor((Date.now() - processStartTime) / 1000);
-      document.getElementById("processTime").textContent = `${elapsed}s`;
-    }
-  }
-
-  function showStatus(elementId, type, message) {
-    const el = document.getElementById(elementId);
+  // Utility: Show status messages
+  function showStatus(el, type, msg) {
     el.className = `status ${type}`;
-    el.textContent = message;
+    el.textContent = msg;
     el.style.display = "block";
-    if (type === "success") {
-      setTimeout(() => (el.style.display = "none"), 5000);
-    }
+    if (type === "success") setTimeout(() => el.style.display = "none", 5000);
   }
 
-  function logMessage(message) {
+  // Utility: Log in-page
+  function logMessage(msg) {
     const logs = document.getElementById("logs");
     const entry = document.createElement("div");
     entry.className = "log-entry";
-    const time = new Date().toLocaleTimeString();
-    entry.innerHTML = `<span class="log-timestamp">[${time}]</span><span class="log-message">${message}</span>`;
+    const ts = new Date().toLocaleTimeString();
+    entry.innerHTML = `<span class="log-timestamp">[${ts}]</span><span class="log-message">${msg}</span>`;
     logs.appendChild(entry);
     logs.scrollTop = logs.scrollHeight;
   }
 
-  // Attach button event handlers
-  document.getElementById("exportBtn").onclick = exportCSV;
-  document.getElementById("sftpBtn").onclick = uploadToSFTP;
-  document.querySelectorAll(".db-action button").forEach((btn) => {
-    btn.onclick = () => executeDatabaseOps(btn.getAttribute("data-db"));
-  });
-</script>
+  // Normalize phone to backend format
+  function normalizePhone(phone) {
+    let digits = phone.replace(/\D/g, "");
+    if (digits.startsWith("0") && digits.length === 11) {
+      digits = "880" + digits.slice(1);
+    } else if (digits.startsWith("+880")) {
+      digits = digits.slice(1);
+    }
+    // if already 13‑digit 880..., leave as is
+    return digits;
+  }
 
+  // ===== LOGIN FLOW =====
+
+  sendOtpBtn.onclick = async () => {
+    loginStatus.style.display = "none";
+    let phone = phoneInput.value.trim();
+    if (!phone) {
+      showStatus(loginStatus, "error", "Please enter phone number");
+      return;
+    }
+    phone = normalizePhone(phone);
+
+    sendOtpBtn.disabled = true;
+    showStatus(loginStatus, "info", "Sending OTP...");
+
+    try {
+      const resp = await fetch("/login-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone })
+      });
+      const result = await resp.json();
+      if (!resp.ok) throw new Error(result.error || "Failed to send OTP");
+
+      showStatus(loginStatus, "success", "OTP sent. Check your phone.");
+      currentUserPhone = phone;
+      otpInputDiv.style.display = "block";
+      verifyOtpBtn.style.display = "inline-block";
+      sendOtpBtn.style.display = "none";
+      phoneInput.disabled = true;
+    } catch (err) {
+      showStatus(loginStatus, "error", err.message);
+      sendOtpBtn.disabled = false;
+    }
+  };
+
+  verifyOtpBtn.onclick = async () => {
+    loginStatus.style.display = "none";
+    const otp = otpInput.value.trim();
+    if (!/^\d{6}$/.test(otp)) {
+      showStatus(loginStatus, "error", "Enter a valid 6‑digit OTP");
+      return;
+    }
+    verifyOtpBtn.disabled = true;
+    showStatus(loginStatus, "info", "Verifying OTP...");
+
+    try {
+      const resp = await fetch("/login-verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: currentUserPhone, otp })
+      });
+      const result = await resp.json();
+      if (!resp.ok) throw new Error(result.error || "OTP verification failed");
+
+      showStatus(loginStatus, "success", "Login successful!");
+      mainWorkflow.style.pointerEvents = "auto";
+      mainWorkflow.style.opacity = "1";
+      loginSection.style.display = "none";
+      logMessage(`User logged in: ${currentUserPhone}`);
+    } catch (err) {
+      showStatus(loginStatus, "error", err.message);
+      verifyOtpBtn.disabled = false;
+    }
+  };
+
+  logoutBtn.onclick = () => {
+    currentUserPhone = null;
+    phoneInput.value = "";
+    phoneInput.disabled = false;
+    otpInput.value = "";
+    otpInputDiv.style.display = "none";
+    sendOtpBtn.style.display = "inline-block";
+    sendOtpBtn.disabled = false;
+    verifyOtpBtn.style.display = "none";
+    verifyOtpBtn.disabled = false;
+    loginStatus.style.display = "none";
+    mainWorkflow.style.pointerEvents = "none";
+    mainWorkflow.style.opacity = "0.5";
+    loginSection.style.display = "block";
+    logMessage("User logged out");
+  };
+
+  // ===== FILE UPLOAD & WORKFLOW LOGIC =====
+
+  // Drag & drop setup
+  fileDropZone.addEventListener("dragover", e => { e.preventDefault(); fileDropZone.classList.add("dragover"); });
+  fileDropZone.addEventListener("dragleave", () => fileDropZone.classList.remove("dragover"));
+  fileDropZone.addEventListener("drop", e => {
+    e.preventDefault(); fileDropZone.classList.remove("dragover");
+    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+  });
+  fileDropZone.addEventListener("click", () => fileInput.click());
+  chooseFileBtn.onclick = () => fileInput.click();
+  fileInput.addEventListener("change", e => {
+    if (e.target.files.length) handleFile(e.target.files[0]);
+  });
+
+  function handleFile(file) {
+    if (!/\.(xlsx|xls)$/i.test(file.name)) {
+      showStatus(fileStatus, "error", "Select a .xlsx or .xls file");
+      return;
+    }
+    uploadedFile = file;
+    showStatus(fileStatus, "success", `Loaded: ${file.name}`);
+    exportBtn.disabled = false;
+    logMessage(`File uploaded: ${file.name}`);
+  }
+
+  // CSV export
+  async function exportCSV() {
+    if (!uploadedFile) {
+      showStatus(csvStatus, "error", "No file selected");
+      return;
+    }
+    processStartTime = Date.now();
+    showStatus(csvStatus, "info", "Processing...Please wait");
+    const formData = new FormData();
+    formData.append("excel", uploadedFile);
+    try {
+      const resp = await fetch("/upload", { method: "POST", body: formData });
+      const res = await resp.json();
+      if (!resp.ok) throw new Error(res.error || "Export failed");
+      showStatus(csvStatus, "success", `CSV generated: ${res.files.join(", ")}`);
+      sftpBtn.disabled = false;
+      logMessage("CSV export completed");
+    } catch (err) {
+      showStatus(csvStatus, "error", err.message);
+      logMessage(`Error: ${err.message}`);
+    }
+  }
+
+  // SFTP upload
+  async function uploadToSFTP() {
+  showStatus(sftpStatus, "info", "Uploading via SFTP...");
+  logMessage("SFTP: connecting...");
+  try {
+    const resp = await fetch("/sftp-upload", { method: "POST" });
+    const res = await resp.json();
+
+    if (!resp.ok) throw new Error(res.error || "SFTP failed");
+
+    showStatus(sftpStatus, "success", "SFTP upload complete");
+    dbButtons.forEach(btn => btn.disabled = false);
+
+    // ✅ Display each log message returned from backend
+    if (Array.isArray(res.log)) {
+      res.log.forEach(msg => logMessage(msg));
+    } else {
+      logMessage("SFTP: done");
+    }
+
+  } catch (err) {
+    showStatus(sftpStatus, "error", err.message);
+    logMessage(`SFTP Error: ${err.message}`);
+  }
+}
+
+
+  // Database operations
+  async function executeDatabaseOps(dbType) {
+    showStatus(dbStatus, "info", `Running DB${dbType}...`);
+    logMessage(`DB${dbType} start`);
+    try {
+      const resp = await fetch(`/run-db${dbType}`, { method: "POST" });
+      const res = await resp.json();
+      if (!resp.ok) throw new Error(res.error || `DB${dbType} failed`);
+      showStatus(dbStatus, "success", `DB${dbType} complete`);
+      logMessage(`DB${dbType} success`);
+      updateSummary(res.month_key, res.duplicates_count, res.records_inserted, res.files_processed || 2);
+    } catch (err) {
+      showStatus(dbStatus, "error", err.message);
+      logMessage(`DB${dbType} Error: ${err.message}`);
+    }
+  }
+
+  function updateSummary(monthKey = "", duplicates = 0, inserted = 0, files = 0) {
+    document.getElementById("filesProcessed").textContent = files;
+    document.getElementById("recordsInserted").textContent = inserted;
+    document.getElementById("duplicatesFound").textContent = duplicates;
+    if (processStartTime) {
+      document.getElementById("processTime").textContent = `${Math.floor((Date.now() - processStartTime)/1000)}s`;
+    }
+  }
+
+  // Initialization
+  window.onload = () => {
+    mainWorkflow.style.pointerEvents = "none";
+    mainWorkflow.style.opacity = "0.5";
+    otpInputDiv.style.display = "none";
+    verifyOtpBtn.style.display = "none";
+    loginStatus.style.display = "none";
+    exportBtn.onclick = exportCSV;
+    sftpBtn.onclick = uploadToSFTP;
+    dbButtons.forEach(btn => btn.onclick = () => executeDatabaseOps(btn.getAttribute("data-db")));
+  };
+</script>
 </body>
 </html>
